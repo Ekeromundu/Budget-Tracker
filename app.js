@@ -275,17 +275,25 @@
     });
   }
 
+  /* Load pdf.js: the copy bundled in vendor/ first, then the public CDN as a fallback. */
+  const PDFJS_SOURCES = [PDFJS, 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/'];
+  const loadScript = src => new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => { s.remove(); rej(new Error(src)); };
+    document.head.appendChild(s);
+  });
   async function loadPdfJs() {
     if (window.pdfjsLib) return window.pdfjsLib;
-    await new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = PDFJS + 'pdf.min.js';
-      s.onload = res;
-      s.onerror = () => rej(new Error('Could not load the PDF reader.'));
-      document.head.appendChild(s);
-    });
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js';
-    return window.pdfjsLib;
+    for (const base of PDFJS_SOURCES) {
+      try {
+        await loadScript(base + 'pdf.min.js');
+        if (window.pdfjsLib) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js';
+          return window.pdfjsLib;
+        }
+      } catch (e) { /* try the next source */ }
+    }
+    throw new Error('Could not load the PDF reader. Check that the vendor folder was uploaded, or connect to the internet and try again.');
   }
 
   async function pdfToLines(buf) {
