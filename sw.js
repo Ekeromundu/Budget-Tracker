@@ -1,5 +1,5 @@
 /* Offline support: app files network-first (so updates show up), other files cache-first. */
-const CACHE = 'pocket-ledger-v3';
+const CACHE = 'pocket-ledger-v4';
 const SHELL = ['./', './index.html', './app.js', './parser.js', './styles.css', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
   './vendor/pdf.min.js', './vendor/pdf.worker.min.js'];

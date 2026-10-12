@@ -194,3 +194,27 @@ ul.small { padding-left: 18px; margin: 6px 0; }
   content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
   background: var(--c); margin-right: 8px; vertical-align: 1px;
 }
+
+/* month-to-month comparison */
+.chg { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.chg.up { color: var(--neg); }
+.chg.down { color: var(--pos); }
+.stat .chg { display: block; margin-top: 2px; font-size: 11px; }
+
+/* 6-month spending chart */
+.chart { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; margin-top: 12px; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 4px; border: none; background: none; padding: 0; font: inherit; color: inherit; }
+.col .amt { font-size: 11px; color: var(--muted); height: 14px; }
+.col .track { width: 100%; max-width: 34px; height: 110px; background: var(--barsoft); border-radius: 8px; display: flex; align-items: flex-end; overflow: hidden; }
+.col .track i { display: block; width: 100%; background: var(--c3); border-radius: 8px; }
+.col.current .track i { background: linear-gradient(180deg, var(--c2), var(--c1)); }
+.col .lbl { font-size: 12px; color: var(--muted); }
+.col.current .lbl, .col.current .amt { color: var(--ink); font-weight: 650; }
+
+/* search box with clear button */
+.searchwrap { position: relative; margin: 8px 0 4px; }
+.searchwrap input { margin: 0; padding-right: 44px; }
+.searchwrap input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.searchwrap .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; border: none; border-radius: 50%; background: var(--barsoft); color: var(--muted); font-size: 13px; }
+.searchwrap input:placeholder-shown + .clear { display: none; }
+

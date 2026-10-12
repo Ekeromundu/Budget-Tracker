@@ -263,6 +263,48 @@
     return `<div class="bar${soft ? " soft" : ""}"><i style="width:${pct.toFixed(1)}%" class="${!soft && v > max ? "over" : ""}"></i></div>`;
   }
 
+  /* Totals for one month: money in, money out and spending per category.
+     It only reads data and returns a result, so it can be reused for any month. */
+  function monthTotals(ym) {
+    const ts = monthTxns(ym).filter((t) => t.category !== "Transfers");
+    const inc = ts.filter((t) => t.amount > 0).reduce((a, t) => a + t.amount, 0);
+    const out = -ts.filter((t) => t.amount < 0).reduce((a, t) => a + t.amount, 0);
+    const spend = {};
+    for (const t of ts)
+      if (t.category !== "Income") spend[t.category] = (spend[t.category] || 0) - t.amount;
+    return { inc, out, spend };
+  }
+
+  /* "↑ 18% vs Aug": spending up is red, down is green. No label = nothing to compare with. */
+  function changeNote(now, before, label) {
+    if (!label || (!now && !before)) return "";
+    if (!before) return `<span class="chg">new vs ${label}</span>`;
+    const pct = Math.round(((now - before) / before) * 100);
+    if (pct === 0) return `<span class="chg">same as ${label}</span>`;
+    return `<span class="chg ${pct > 0 ? "up" : "down"}">${pct > 0 ? "↑" : "↓"} ${Math.abs(pct)}% vs ${label}</span>`;
+  }
+
+  /* 5600 -> "5.6k", 12400 -> "12k", 830 -> "830" */
+  const kShort = (n) => (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k" : String(Math.round(n)));
+
+  /* Bar chart of money out for the 6 months up to the one being viewed. Tap a bar to open that month. */
+  function spendChart() {
+    const months = [];
+    for (let i = 5; i >= 0; i--) months.push(shiftMonth(UI.month, -i));
+    const totals = months.map((m) => monthTotals(m).out);
+    const max = Math.max(1, ...totals);
+    const cols = months
+      .map((m, i) => {
+        const h = totals[i] ? Math.max(3, Math.round((totals[i] / max) * 100)) : 0;
+        return `<button class="col${m === UI.month ? " current" : ""}" data-action="pickmonth" data-m="${m}" aria-label="${esc(monthLabel(m))}: ${fmt(totals[i])}">
+          <span class="amt">${totals[i] ? kShort(totals[i]) : ""}</span>
+          <span class="track"><i style="height:${h}%"></i></span>
+          <span class="lbl">${monthLabel(m).slice(0, 3)}</span></button>`;
+      })
+      .join("");
+    return `<div class="card"><b>Spending, last 6 months</b><div class="chart">${cols}</div></div>`;
+  }
+
   /* ---------- views ---------- */
   const VIEWS = {
     overview() {
@@ -271,17 +313,10 @@
           <p class="muted">Import a bank statement (CSV or PDF) to see where your money goes each month.</p>
           <button class="primary full" data-action="go" data-view="import">Import a statement</button></section>`;
       }
-      const ts = monthTxns(UI.month).filter((t) => t.category !== "Transfers");
-      const inc = ts
-        .filter((t) => t.amount > 0)
-        .reduce((a, t) => a + t.amount, 0);
-      const out = -ts
-        .filter((t) => t.amount < 0)
-        .reduce((a, t) => a + t.amount, 0);
-      const spend = {};
-      for (const t of ts)
-        if (t.category !== "Income")
-          spend[t.category] = (spend[t.category] || 0) - t.amount;
+      const { inc, out, spend } = monthTotals(UI.month);
+      const prevMonth = shiftMonth(UI.month, -1);
+      const prev = monthTotals(prevMonth);
+      const prevLabel = monthTxns(prevMonth).length ? monthLabel(prevMonth).slice(0, 3) : null;
       const rows = S.categories
         .filter((c) => !["Income", "Transfers"].includes(c.name))
         .map((c) => ({
@@ -308,15 +343,16 @@
         return `<button class="catrow" style="--c: ${catColor(r.name)}" data-action="filtercat" data-cat="${esc(r.name)}">
           <div class="row between"><b>${esc(r.name)}</b><span><b>${fmt(r.spent)}</b>${r.budget ? ` <span class="muted small">/ ${fmt(r.budget)}</span>` : ""}</span></div>
           ${r.budget ? bar(r.spent, r.budget) : bar(r.spent, maxSpent, true)}
-          <div class="small">${note}</div></button>`;
+          <div class="small row between">${note}${changeNote(r.spent, Math.max(0, prev.spend[r.name] || 0), prevLabel)}</div></button>`;
       };
       return `${monthNav()}
         <div class="stats">
           <div class="stat stat-in"><span>Money in</span><b class="pos">${fmtShort(inc)}</b></div>
-          <div class="stat stat-out"><span>Money out</span><b class="neg">${fmtShort(out)}</b></div>
+          <div class="stat stat-out"><span>Money out</span><b class="neg">${fmtShort(out)}</b>${changeNote(out, prev.out, prevLabel)}</div>
           <div class="stat stat-net"><span>Net</span><b class="${inc - out >= 0 ? "pos" : "neg"}">${fmtShort(inc - out)}</b></div>
         </div>
         ${totB ? `<div class="card"><div class="row between"><span>Budget used</span><b>${fmt(totS)} / ${fmt(totB)}</b></div>${bar(totS, totB)}</div>` : ""}
+        ${spendChart()}
         <h2 class="section">Spending by category</h2>
         <div class="card list">${rows.length ? rows.map(catRow).join("") : '<p class="muted">No spending this month.</p>'}</div>
         <p class="muted small center">Transfers are left out of these totals. Tap a category to see its transactions.</p>`;
@@ -324,7 +360,10 @@
 
     transactions() {
       return `${monthNav()}
-        <input type="search" placeholder="Search description or category" value="${esc(UI.search)}" data-action="search" aria-label="Search">
+        <div class="searchwrap">
+          <input type="search" placeholder="Search description or category" value="${esc(UI.search)}" data-action="search" aria-label="Search">
+          <button class="clear" type="button" data-action="clearsearch" aria-label="Clear search">✕</button>
+        </div>
         <details class="card add"><summary>Add a transaction</summary>
           <form id="addform" class="grid">
             <label>Date<input type="date" name="date" value="${today()}" required></label>
@@ -695,6 +734,10 @@
       case "pickyear":
         UI.pickYear = +el.dataset.y;
         UI.picker = "months";
+        render();
+        break;
+      case "clearsearch":
+        UI.search = "";
         render();
         break;
       case "pickmonth":
