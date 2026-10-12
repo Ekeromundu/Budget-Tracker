@@ -1,31 +1,52 @@
+/* Theme: "Sakura Sky" palette — rose #C67C77, pink #E892B3, blush #F0BCD0, mist #EBF3F7, sky #CDE7F3 */
 :root {
-  --bg: #f4f3ef;
+  --bg: #EBF3F7;
   --card: #ffffff;
-  --ink: #1c1f1e;
-  --muted: #6b716e;
-  --line: #e4e2dc;
-  --accent: #0f766e;
-  --accent-ink: #ffffff;
-  --pos: #15803d;
+  --ink: #2a1d22;
+  --muted: #66707a;
+  --line: #dbe6ec;
+  --accent: #E892B3;        /* buttons, selected month */
+  --accent-ink: #3a1022;    /* text ON the accent */
+  --accent-text: #a34b62;   /* accent used AS text (active tab, links) */
+  --pos: #0f6b33;
   --neg: #b42318;
-  --bar: #d9e9e6;
-  --barsoft: #e7e5df;
+  --bar: #F0BCD0;
+  --barsoft: #e3edf2;
+  /* category colours, given out in turn */
+  --c1: #C67C77;
+  --c2: #E892B3;
+  --c3: #7DB7D6;
+  --c4: #D9A0BA;
+  --c5: #8FA9C4;
+  /* tinted summary cards */
+  --tint-in: #d9ecf6;
+  --tint-out: #f6d7e3;
+  --tint-net: #efdcdb;
   --radius: 14px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111413;
-    --card: #1b201e;
-    --ink: #ecefed;
-    --muted: #9aa29e;
-    --line: #2a312e;
-    --accent: #2dd4bf;
-    --accent-ink: #062b27;
+    --bg: #141218;
+    --card: #1f1b24;
+    --ink: #f2ecef;
+    --muted: #a69ca3;
+    --line: #2f2833;
+    --accent: #E892B3;
+    --accent-ink: #3a1022;
+    --accent-text: #E892B3;
     --pos: #4ade80;
-    --neg: #f87171;
-    --bar: #18403b;
-    --barsoft: #2a312e;
+    --neg: #ff6b6b;
+    --bar: #4a2a38;
+    --barsoft: #2c2630;
+    --c1: #D9918C;
+    --c2: #E892B3;
+    --c3: #CDE7F3;
+    --c4: #F0BCD0;
+    --c5: #9FC9DE;
+    --tint-in: #26303a;
+    --tint-out: #362632;
+    --tint-net: #33262a;
     color-scheme: dark;
   }
 }
@@ -77,7 +98,7 @@ button.primary, .file.primary { background: var(--accent); color: var(--accent-i
 button:disabled { opacity: .45; }
 button.full, .file.full, .full { width: 100%; margin-top: 8px; }
 button.danger { color: var(--neg); }
-button.link { background: none; border: none; padding: 6px 4px; color: var(--accent); font-weight: 500; }
+button.link { background: none; border: none; padding: 6px 4px; color: var(--accent-text); font-weight: 500; }
 button.link.danger { color: var(--neg); }
 button.icon { width: 40px; height: 40px; padding: 0; font-size: 24px; border-radius: 50%; }
 .vh { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
@@ -140,7 +161,7 @@ ul.small { padding-left: 18px; margin: 6px 0; }
 }
 .tab { flex-direction: column; gap: 2px; border: none; background: none; font-size: 11px; font-weight: 500; color: var(--muted); padding: 4px 0; }
 .tab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.tab.active { color: var(--accent); }
+.tab.active { color: var(--accent-text); }
 
 #toast {
   position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(10px);
@@ -148,3 +169,28 @@ ul.small { padding-left: 18px; margin: 6px 0; }
   opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); z-index: 20;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* month / year picker */
+.navlabel { border: none; background: none; font-size: 17px; font-weight: 700; padding: 8px 10px; border-radius: 10px; }
+.navlabel:active, .navlabel[aria-expanded="true"] { background: var(--barsoft); }
+.picker { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; margin: 0 0 12px; }
+.pickhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; min-height: 40px; }
+.pickhead strong { margin: 0 auto; }
+.pickgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.pick-cell { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 12px 0; font-size: 15px; font-weight: 500; color: var(--muted); }
+.pick-cell.has { color: var(--ink); font-weight: 650; }
+.pick-cell.current { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* colourful cards and bars */
+.stat { border-color: transparent; }
+.stat-in  { background: var(--tint-in); }
+.stat-out { background: var(--tint-out); }
+.stat-net { background: var(--tint-net); }
+.stat span { color: var(--ink); opacity: .75; }
+.bar i { background: linear-gradient(90deg, var(--c1), var(--c2)); }
+.catrow .bar i { background: var(--c); }
+.catrow .bar.soft i { background: var(--c); opacity: .7; }
+.catrow .bar i.over, .bar i.over { background: var(--neg); opacity: 1; }
+.catrow .row > b::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--c); margin-right: 8px; vertical-align: 1px;
+}
